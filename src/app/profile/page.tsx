@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import TalentSection from "./talents-section";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -162,6 +163,8 @@ export default function ProfilePage() {
             />
             <small>{form.bio.length}/500 characters</small>
           </label>
+
+          <TalentSection />
 
           {message && (
             <p className={message.includes("successfully") ? "profile-success" : "profile-error"} role="status">

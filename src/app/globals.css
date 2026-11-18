@@ -3313,3 +3313,125 @@ h1 em, h2 em { font-family: "Playfair Display", serif; font-weight: 500; letter-
     padding: 21px;
   }
 }
+/* ClubVerse Student Talent Profile */
+.talent-section {
+  margin-top: 42px;
+  padding: 30px;
+  border: 1px solid #e9e3d8;
+  border-radius: 18px;
+  background: #fffdf9;
+}
+
+.talent-heading > span {
+  color: #a16b43;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+}
+
+.talent-heading h2 {
+  margin: 9px 0;
+  color: #20201e;
+  font-size: 25px;
+}
+
+.talent-heading p,
+.talent-group > p {
+  color: #858075;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.talent-group {
+  margin-top: 28px;
+}
+
+.talent-group h3 {
+  margin: 0 0 6px;
+  color: #292720;
+  font-size: 15px;
+}
+
+.talent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.talent-chip {
+  padding: 9px 13px;
+  border: 1px solid #e6e0d5;
+  border-radius: 30px;
+  background: #fff;
+  color: #514c43;
+  cursor: pointer;
+  font-size: 11px;
+  transition: .2s ease;
+}
+
+.talent-chip:hover {
+  border-color: #d98251;
+}
+
+.talent-chip.selected {
+  border-color: #47734a;
+  background: #edf4eb;
+  color: #315b35;
+  font-weight: 600;
+}
+
+.talent-beginner-note {
+  margin-top: 28px;
+  padding: 17px;
+  border-radius: 12px;
+  background: #f1f5ed;
+  color: #365d39;
+}
+
+.talent-beginner-note strong {
+  font-size: 13px;
+}
+
+.talent-beginner-note p {
+  margin: 7px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.talent-save {
+  margin-top: 22px;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #47734a;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.talent-save:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.talent-success,
+.talent-error {
+  margin-top: 15px;
+  font-size: 12px;
+}
+
+.talent-success {
+  color: #367343;
+}
+
+.talent-error {
+  color: #b43c32;
+}
+
+@media (max-width: 600px) {
+  .talent-section {
+    padding: 20px;
+  }
+}
