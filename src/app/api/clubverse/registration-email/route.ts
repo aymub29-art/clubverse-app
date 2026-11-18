@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!registration || registration.status !== "registered") {
+    if (!registration || !["registered", "attended"].includes(registration.status)) {
       return NextResponse.json(
         { success: false, message: "Valid registration not found." },
         { status: 404 }
@@ -212,3 +212,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+

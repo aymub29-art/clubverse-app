@@ -162,7 +162,7 @@ export default function MyQRPage() {
                 Print / Save pass
               </button>
 
-              {item.status === "registered" && (
+              {["registered", "attended"].includes(item.status) && (
                 <>
                   <button
                     className="qr-print"
@@ -193,3 +193,4 @@ export default function MyQRPage() {
     </main>
   );
 }
+
