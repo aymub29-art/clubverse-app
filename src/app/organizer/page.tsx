@@ -1,5 +1,4 @@
-﻿
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -414,6 +413,32 @@ export default function OrganizerPage() {
     }
   }
 
+  function exportRegistrationsCSV() {
+    if (!selectedEvent || registrations.length === 0) return;
+
+    const headers = ["Student Name", "Department", "College", "Registration Date", "Attendance Status", "Attendance Time"];
+    const escapeCSV = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+    const rows = registrations.map((registration) => [
+      registration.student?.full_name || "Student profile unavailable",
+      registration.student?.department || "",
+      registration.student?.college || "",
+      new Date(registration.registered_at).toLocaleString("en-IN"),
+      registration.status,
+      registration.attended_at ? new Date(registration.attended_at).toLocaleString("en-IN") : "",
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.map(value => escapeCSV(String(value))).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedEvent.title.replace(/[^a-z0-9]/gi, "_")}_registrations.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -835,6 +860,15 @@ export default function OrganizerPage() {
             )}
 
             <div className="organizer-modal-footer">
+              {registrations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={exportRegistrationsCSV}
+                  disabled={registrationLoading}
+                >
+                  Download CSV
+                </button>
+              )}
               <button onClick={() => setSelectedEvent(null)}>
                 Close
               </button>
@@ -849,4 +883,3 @@ export default function OrganizerPage() {
     </main>
   );
 }
-
