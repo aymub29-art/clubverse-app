@@ -15,8 +15,14 @@ type ClubEvent = {
   status: string;
 };
 
+type StudentProfile = {
+  id: string;
+  college: string | null;
+  department: string | null;
+};
 type Registration = {
   event_id: string;
+  user_id: string;
   status: string;
 };
 
@@ -26,6 +32,7 @@ export default function AnalyticsPage() {
 
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -67,14 +74,30 @@ export default function AnalyticsPage() {
 
         supabase
           .from("registrations")
-          .select("event_id,status"),
+          .select("event_id,user_id,status"),
       ]);
 
       if (eventResult.error) throw eventResult.error;
       if (registrationResult.error) throw registrationResult.error;
 
+      const registrationRows = registrationResult.data || [];
+      const userIds = [...new Set(registrationRows.map((row) => row.user_id))];
+
+      let profileRows: StudentProfile[] = [];
+
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id,college,department")
+          .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+        profileRows = profilesData || [];
+      }
+
+      setStudentProfiles(profileRows);
       setEvents(eventResult.data || []);
-      setRegistrations(registrationResult.data || []);
+      setRegistrations(registrationRows);
       setLastUpdated(new Date().toLocaleTimeString("en-IN"));
     } catch (err) {
       console.error("Analytics error:", err);
@@ -166,6 +189,49 @@ export default function AnalyticsPage() {
     };
   });
 
+  const profileById = new Map(
+    studentProfiles.map((profile) => [profile.id, profile])
+  );
+
+  const buildParticipationStats = (field: "department" | "college") => {
+    const counts = new Map<string, number>();
+    let missing = 0;
+
+    registrations
+      .filter((registration) =>
+        registration.status === "registered" ||
+        registration.status === "attended"
+      )
+      .forEach((registration) => {
+        const profile = profileById.get(registration.user_id);
+        const rawValue = profile?.[field]?.trim();
+        if (!rawValue) {
+          missing += 1;
+          return;
+        }
+
+        const label = rawValue.replace(/\s+/g, " ");
+        counts.set(label, (counts.get(label) || 0) + 1);
+      });
+
+    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+
+    return {
+      items: [...counts.entries()]
+        .map(([name, count]) => ({
+          name,
+          count,
+          percentage: total ? Math.round((count / total) * 100) : 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6),
+      total,
+      missing,
+    };
+  };
+
+  const departmentStats = buildParticipationStats("department");
+  const collegeStats = buildParticipationStats("college");
   const chartMax = Math.max(
     1,
     ...eventStats.flatMap((event) => [event.registered, event.attended])
@@ -389,6 +455,101 @@ export default function AnalyticsPage() {
               )}
             </article>
           </div>
+        </section>
+        <section className="analytics-demographics">
+          <div className="analytics-demographics-heading">
+            <p className="eyebrow">COMMUNITY COMPOSITION</p>
+            <h2>Who's participating?</h2>
+            <p>Participation grouped by the department and college saved in student profiles.</p>
+          </div>
+
+          <div className="analytics-demographics-grid">
+            <article className="analytics-demographic-card">
+              <div className="analytics-demographic-title">
+                <div>
+                  <span className="analytics-demographic-label">DEPARTMENT-WISE</span>
+                  <h3>Top departments</h3>
+                </div>
+                <strong>{departmentStats.total}</strong>
+              </div>
+
+              {departmentStats.items.length > 0 ? (
+                <div className="analytics-demographic-list">
+                  {departmentStats.items.map((item) => (
+                    <div className="analytics-demographic-item" key={item.name}>
+                      <div className="analytics-demographic-item-heading">
+                        <span>{item.name}</span>
+                        <strong>{item.count}</strong>
+                      </div>
+                      <div className="analytics-demographic-track">
+                        <div
+                          className="analytics-demographic-bar analytics-department-bar"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <small>{item.percentage}% of identified department participation</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="analytics-demographic-empty">
+                  Department participation will appear when students complete their profiles.
+                </p>
+              )}
+
+              {departmentStats.missing > 0 && (
+                <p className="analytics-demographic-missing">
+                  {departmentStats.missing} active registration(s) have no department listed.
+                </p>
+              )}
+            </article>
+
+            <article className="analytics-demographic-card">
+              <div className="analytics-demographic-title">
+                <div>
+                  <span className="analytics-demographic-label">COLLEGE-WISE</span>
+                  <h3>Top colleges</h3>
+                </div>
+                <strong>{collegeStats.total}</strong>
+              </div>
+
+              {collegeStats.items.length > 0 ? (
+                <div className="analytics-demographic-list">
+                  {collegeStats.items.map((item) => (
+                    <div className="analytics-demographic-item" key={item.name}>
+                      <div className="analytics-demographic-item-heading">
+                        <span>{item.name}</span>
+                        <strong>{item.count}</strong>
+                      </div>
+                      <div className="analytics-demographic-track">
+                        <div
+                          className="analytics-demographic-bar analytics-college-bar"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <small>{item.percentage}% of identified college participation</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="analytics-demographic-empty">
+                  College participation will appear when students complete their profiles.
+                </p>
+              )}
+
+              {collegeStats.missing > 0 && (
+                <p className="analytics-demographic-missing">
+                  {collegeStats.missing} active registration(s) have no college listed.
+                </p>
+              )}
+            </article>
+          </div>
+
+          <p className="analytics-demographic-note">
+            Counts represent active event registrations, not unique students.
+            Cancelled registrations are excluded. Percentages are calculated
+            among registrations with the relevant profile field completed.
+          </p>
         </section>
         <section className="analytics-chart-panel">
           <div className="analytics-chart-heading">
