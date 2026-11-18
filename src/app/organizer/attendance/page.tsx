@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -125,9 +125,34 @@ export default function AttendancePage() {
       if (error) throw error;
 
       if (data === "ATTENDANCE_MARKED") {
-        setMessage("Attendance successfully recorded!");
+        setMessage("Attendance successfully recorded! Sending confirmation email...");
         setResult("success");
         setManualToken("");
+
+        // Email is sent only for the first successful attendance mark.
+        // Duplicate scans never reach this branch.
+        try {
+          const emailResponse = await fetch("/api/clubverse/attendance-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ attendanceToken: token }),
+          });
+          const emailResult = await emailResponse.json();
+
+          if (emailResponse.ok && emailResult?.success === true) {
+            setMessage("Attendance successfully recorded! Confirmation email sent.");
+          } else {
+            setMessage(
+              "Attendance successfully recorded, but the confirmation email could not be sent."
+            );
+            console.error("Attendance email error:", emailResult?.message);
+          }
+        } catch (emailError) {
+          console.error("Attendance email request failed:", emailError);
+          setMessage(
+            "Attendance successfully recorded, but the confirmation email could not be sent."
+          );
+        }
       } else if (data === "ALREADY_MARKED") {
         setMessage("This student has already been marked present.");
         setResult("duplicate");
