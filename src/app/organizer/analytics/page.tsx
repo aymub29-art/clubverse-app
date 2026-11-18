@@ -166,6 +166,10 @@ export default function AnalyticsPage() {
     };
   });
 
+  const chartMax = Math.max(
+    1,
+    ...eventStats.flatMap((event) => [event.registered, event.attended])
+  );
   const mostPopular = [...eventStats]
     .filter((event) => event.active > 0)
     .sort((a, b) => b.active - a.active)[0];
@@ -309,6 +313,56 @@ export default function AnalyticsPage() {
           </article>
         </div>
 
+        <section className="analytics-chart-panel">
+          <div className="analytics-chart-heading">
+            <div>
+              <p className="eyebrow">PARTICIPATION ANALYSIS</p>
+              <h2>Registration vs attendance</h2>
+              <p>Compare registration status with successful event check-ins.</p>
+            </div>
+            <div className="analytics-chart-legend">
+              <span><i className="analytics-legend-registered" /> Registered</span>
+              <span><i className="analytics-legend-attended" /> Attended</span>
+            </div>
+          </div>
+
+          {eventStats.length === 0 ? (
+            <p className="analytics-chart-empty">Event comparisons will appear here when you create events.</p>
+          ) : (
+            <div className="analytics-chart-list">
+              {eventStats.map((event) => (
+                <article className="analytics-chart-row" key={event.id}>
+                  <div className="analytics-chart-event-title">
+                    <strong>{event.title}</strong>
+                    <span>{event.active} active registrations</span>
+                  </div>
+
+                  <div className="analytics-chart-metric">
+                    <span>Registered</span>
+                    <div className="analytics-chart-track">
+                      <div
+                        className="analytics-chart-bar analytics-chart-bar-registered"
+                        style={{ width: `${(event.registered / chartMax) * 100}%` }}
+                      />
+                    </div>
+                    <strong>{event.registered}</strong>
+                  </div>
+
+                  <div className="analytics-chart-metric">
+                    <span>Attended</span>
+                    <div className="analytics-chart-track">
+                      <div
+                        className="analytics-chart-bar analytics-chart-bar-attended"
+                        style={{ width: `${(event.attended / chartMax) * 100}%` }}
+                      />
+                    </div>
+                    <strong>{event.attended}</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
         <div className="analytics-section-heading">
           <div>
             <p className="eyebrow">EVENT PERFORMANCE</p>
