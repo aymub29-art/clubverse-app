@@ -176,6 +176,51 @@ export default function AttendancePage() {
     }
   }
 
+  async function resendAttendanceEmail() {
+    const token = manualToken.trim();
+
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        token
+      )
+    ) {
+      setMessage("Enter a valid student's QR token before resending the email.");
+      setResult("error");
+      return;
+    }
+
+    if (processingRef.current) return;
+
+    processingRef.current = true;
+    setProcessing(true);
+    setResult("");
+    setMessage("Checking attendance and sending confirmation email...");
+
+    try {
+      const response = await fetch("/api/clubverse/attendance-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attendanceToken: token }),
+      });
+      const data = await response.json();
+
+      if (response.ok && data?.success === true) {
+        setMessage("Attendance confirmation email sent successfully.");
+        setResult("success");
+      } else {
+        setMessage(data?.message || "Could not send the attendance confirmation email.");
+        setResult("error");
+      }
+    } catch (error) {
+      console.error("Attendance email resend failed:", error);
+      setMessage("Could not connect to the attendance email service.");
+      setResult("error");
+    } finally {
+      processingRef.current = false;
+      if (mountedRef.current) setProcessing(false);
+    }
+  }
+
   async function startScanner() {
     if (scanning || processing) return;
 
@@ -311,6 +356,13 @@ export default function AttendancePage() {
               disabled={processing || !manualToken.trim()}
             >
               {processing ? "Verifying..." : "Verify attendance"}
+            </button>
+
+            <button
+              onClick={resendAttendanceEmail}
+              disabled={processing || !manualToken.trim()}
+            >
+              {processing ? "Please wait..." : "Resend attendance confirmation email"}
             </button>
           </div>
 
