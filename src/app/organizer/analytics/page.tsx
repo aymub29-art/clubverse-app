@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -174,6 +174,24 @@ export default function AnalyticsPage() {
     .filter((event) => event.active > 0)
     .sort((a, b) => b.active - a.active)[0];
 
+  const bestAttendance = [...eventStats]
+    .filter((event) => event.active > 0)
+    .sort((a, b) => b.rate - a.rate || b.attended - a.attended)[0];
+
+  const lowAttendanceEvents = eventStats.filter(
+    (event) => event.active >= 5 && event.rate < 50
+  );
+
+  const nearlyFullEvents = eventStats.filter(
+    (event) => event.capacityRate !== null &&
+      event.capacityRate >= 80 &&
+      event.capacityRate < 100
+  );
+
+  const fullCapacityEvents = eventStats.filter(
+    (event) => event.capacityRate !== null &&
+      event.capacityRate >= 100
+  );
   if (loading) {
     return (
       <main className="analytics-page">
@@ -313,6 +331,65 @@ export default function AnalyticsPage() {
           </article>
         </div>
 
+        <section className="analytics-intelligence">
+          <div className="analytics-intelligence-heading">
+            <p className="eyebrow">SMART EVENT INSIGHTS</p>
+            <h2>Event intelligence</h2>
+            <p>Performance signals based on your actual registration and attendance records.</p>
+          </div>
+
+          <div className="analytics-intelligence-grid">
+            <article className="analytics-intel-card">
+              <span className="analytics-intel-tag">TOP PERFORMANCE</span>
+              <h3>{bestAttendance?.title || "No data yet"}</h3>
+              <strong>{bestAttendance ? `${bestAttendance.rate}%` : "—"}</strong>
+              <p>
+                {bestAttendance
+                  ? `${bestAttendance.attended} attendees from ${bestAttendance.active} active registrations`
+                  : "Event performance will appear when registrations arrive."}
+              </p>
+            </article>
+
+            <article className="analytics-intel-card analytics-intel-warning">
+              <span className="analytics-intel-tag">LOW ATTENDANCE</span>
+              <strong>{lowAttendanceEvents.length}</strong>
+              <p>Events with at least 5 active registrations and attendance below 50%.</p>
+              {lowAttendanceEvents.length > 0 && (
+                <ul>
+                  {lowAttendanceEvents.map((event) => (
+                    <li key={event.id}>{event.title} — {event.rate}%</li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="analytics-intel-card analytics-intel-capacity">
+              <span className="analytics-intel-tag">NEAR CAPACITY</span>
+              <strong>{nearlyFullEvents.length}</strong>
+              <p>Events that have reached 80% to less than 100% of their capacity.</p>
+              {nearlyFullEvents.length > 0 && (
+                <ul>
+                  {nearlyFullEvents.map((event) => (
+                    <li key={event.id}>{event.title} — {event.capacityRate}%</li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="analytics-intel-card analytics-intel-full">
+              <span className="analytics-intel-tag">CAPACITY REACHED</span>
+              <strong>{fullCapacityEvents.length}</strong>
+              <p>Events whose active registrations have reached or exceeded capacity.</p>
+              {fullCapacityEvents.length > 0 && (
+                <ul>
+                  {fullCapacityEvents.map((event) => (
+                    <li key={event.id}>{event.title} — {event.capacityRate}%</li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          </div>
+        </section>
         <section className="analytics-chart-panel">
           <div className="analytics-chart-heading">
             <div>
